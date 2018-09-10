@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="http://libs.baidu.com/jquery/1.9.0/jquery.js"></script>
+    <style type="text/css">
+      input {
+        width: 300px;
+      }
+
+      .chat_window { 
+            width: 500px; 
+            height: 500px; 
+            padding: 6px; 
+            overflow-y: scroll; 
+            word-break: break-all; 
+            background: #ccc; 
+            margin: 10px 0;
+        } 
+
+      .timestamp {
+        color: blue;
+      }
+
+      .chat_content {
+        padding-bottom: 10px;
+      }
+      .connect,.send_msg{
+        padding: 5px 0;
+      }
+      .content {
+        display: inline;
+      }
+      .cfg_content,.mobile_content {
+        float:left;
+        margin:5px 0;
+        padding: 10px;      
+      }
+  </style>    
+  </head>
+  <body>
+    <div class="content">
+      <div class="cfg_content" style="border-right: 2px solid black; padding-left: 15px; padding-right: 60px">
+        <div class="connect">
+        Cfgtool websocket link:
+        <br>
+        <input type="text" id="cfgtool_link" value="ws://121.40.165.18:8800">
+        
+        <button type="button" id="cfgtool_connect">Connect</button>
+        <button type="button" id="cfgtool_disconn" disabled>Disconnect</button>
+      </div>
+      <div class="send_msg">
+        Send Message:
+        <br>
+          <textarea rows="10" cols="65" id="cfgtool_msg"> </textarea>
+        <button type="button" id="cfgtool_send" disabled>Send</button>
+      </div>
+        <div class="chat_window" id="cfgtool">
+          </div>
+      </div>
+
+          
+
+      <div class="mobile_content" style="padding-left: 60px">
+        <div class="connect">
+        Mobile websocket link:
+        <br>
+          <input type="text" id="mobile_link" value="">
+        
+        <button type="button" id="mobile_connect">Connect</button>
+        <button type="button" id="mobile_disconn" disabled>Disconnect</button>
+        </div>
+
+        <div class="send_msg">
+        Send Message:
+        <br>
+        <textarea rows="10" cols="65" id="mobile_msg"> </textarea>
+        <button type="button" id="mobile_send" disabled>Send</button>
+        </div>
+        <div class="chat_window" id="mobile">
+          </div>
+      </div>
+    </div>
+
+
+        <script type="text/javascript">
+          let ws = {
+            "cfgtool":{},
+            "mobile":{}
+          }
+
+        $("button#cfgtool_connect").click(function(){
+          ws.cfgtool = new WebSocket($("input#cfgtool_link").val());
+
+          ws.cfgtool.onopen = function(evt) { 
+            console.log("Connection open ...");
+            displayCfgtoolMsg("Connection open ...", true);
+            $("button#cfgtool_connect").prop("disabled",true); 
+            $("button#cfgtool_disconn").prop("disabled",false);
+            $("button#cfgtool_send").prop("disabled",false);  
+          };
+
+          ws.cfgtool.onmessage = function(evt) {
+            console.log( "Received Message: " + evt.data);
+            displayCfgtoolMsg(evt.data, true);
+          };
+
+          ws.cfgtool.onclose = function(evt) {
+            console.log("Connection closed.");
+            displayCfgtoolMsg("Connection closed.", true);
+            $("button#cfgtool_connect").prop("disabled",false); 
+            $("button#cfgtool_disconn").prop("disabled",true); 
+            $("button#cfgtool_send").prop("disabled",true); 
+          };
+        });
+
+        $("button#cfgtool_disconn").click(function(){
+             ws.cfgtool.close();
+          }); 
+
+          $("button#cfgtool_send").click(function(){
+            let content = $("#cfgtool_msg").val();
+            ws.cfgtool.send(content);
+            displayCfgtoolMsg(content, false);
+          });
+
+        function displayCfgtoolMsg(str, received) 
+         { 
+           let timeStamp;
+           if(received === true) 
+            { 
+              timeStamp = $("<div></div>").text("Server: " + new Date().toLocaleString('en-GB'));
+            }
+            else
+            {
+              timeStamp = $("<div></div>").text("Client: " + new Date().toLocaleString('en-GB'));
+            }
+           timeStamp.addClass("timestamp");
+           let content = $("<div></div>").text(str);
+           content.addClass("chat_content");
+           content.prepend(timeStamp);
+           $("#cfgtool").append(content); 
+           $("#cfgtool").scrollTop($("#cfgtool")[0].scrollHeight);
+         } 
+
+
+          $("button#mobile_connect").click(function(){
+            ws.mobile = new WebSocket($("input#mobile_link").val());
+
+            ws.mobile.onopen = function(evt) { 
+              console.log("Connection open ...");
+              displayMobileMsg("Connection open ...", true);
+              $("button#mobile_connect").prop("disabled",true); 
+            $("button#mobile_disconn").prop("disabled",false);
+            $("button#mobile_send").prop("disabled",false);             
+          };
+
+            ws.mobile.onmessage = function(evt) {
+              console.log( "Received Message: " + evt.data);
+              displayMobileMsg(evt.data, true);
+            };
+
+            ws.mobile.onclose = function(evt) {
+              console.log("Connection closed.");
+              displayMobileMsg("Connection closed.", true);
+              $("button#mobile_connect").prop("disabled",false); 
+            $("button#mobile_disconn").prop("disabled",true);
+            $("button#mobile_send").prop("disabled",true);             
+            };
+          });
+
+          $("button#mobile_disconn").click(function(){
+             ws.mobile.close();
+          }); 
+
+          $("button#mobile_send").click(function(){
+            let content = $("#mobile_msg").val();
+            ws.mobile.send(content);
+            displayMobileMsg(content, false);
+          });
+
+        function displayMobileMsg(str, received) 
+         { 
+
+          let timeStamp;
+           if(received === true) 
+            { 
+              timeStamp = $("<div></div>").text("Server: " + new Date().toLocaleString('en-GB'));
+            }
+            else
+            {
+              timeStamp = $("<div></div>").text("Client: " + new Date().toLocaleString('en-GB'));
+            }
+           timeStamp.addClass("timestamp");
+           let content = $("<div></div>").text(str);
+           content.addClass("chat_content");
+           content.prepend(timeStamp);
+           $("#mobile").append(content); 
+           $("#mobile").scrollTop($("#mobile")[0].scrollHeight);
+        }
+
+      </script>
+      </body>
+</html>
